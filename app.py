@@ -2,14 +2,10 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import os
-import matplotlib.pyplot as plt
+import altair as alt
 
 # --- 1. ตั้งค่าระบบ ---
 st.set_page_config(page_title="ระบบบริหารจัดการงบประมาณ มพย.", layout="wide", page_icon="🛡️")
-
-# รองรับภาษาไทยในกราฟ Matplotlib (ใช้ Font ภาษาอังกฤษแทนเพื่อป้องกันสระลอย หรือใช้ Tahoma ถ้ามี)
-# เนื่องจาก Server Streamlit อาจไม่มีฟอนต์ไทย จั่นเจาจะใช้เทคนิคแสดงผลเป็นรหัสหรือภาษาอังกฤษกำกับ
-# หรือใช้ Default Font ที่อ่านง่าย
 
 DB_FILE = "database_claims.csv"
 TARGET_FILE = "budget_targets.csv"
@@ -28,7 +24,7 @@ FACULTY_MASTER = [
     "คณะนิติศาสตร์", "คณะบริหารธุรกิจ", "วิทยาลัยสหวิทยาการ",
     "คณะพยาบาลศาสตร์แมคคอร์มิค", "คณะเภสัชศาสตร์", "วิทยาลัยนานาชาติ",
     "วิทยาลัยดุริยศิลป์", "วิทยาลัยพระคริสต์ธรรมแมคกิลวารี",
-    "บัณฑิตวิทยาลัย", "สำนักการศึกษาทั่วไป", "สำนักวิจัย"
+    "บัณฑิตวิทยาลัย", "สำนักการศึกษาทั่วไป"
 ]
 
 # --- 2. ฟังก์ชันจัดการข้อมูล ---
@@ -68,14 +64,30 @@ def get_next_doc_no():
         return "0203/001"
 
 def process_data(df):
-    if df.empty: return df
+    """ฟังก์ชันจัดการข้อมูล (แก้ไขป้องกัน KeyError)"""
+    # 1. สร้างคอลัมน์ที่จำเป็นให้ครบก่อนเสมอ (แม้มันจะว่างก็ตาม)
+    required_cols = ['ปี', 'เดือน', 'จำนวนเงิน', 'ปีงบประมาณ', 'ปีการศึกษา', 'ปีปฏิทิน']
+    for col in required_cols:
+        if col not in df.columns:
+            # กำหนด Type เป็นตัวเลขรอไว้เลย
+            if col == 'จำนวนเงิน':
+                df[col] = pd.Series(dtype='float')
+            else:
+                df[col] = pd.Series(dtype='int')
+
+    if df.empty:
+        return df
+
+    # 2. แปลงข้อมูลเป็นตัวเลขจริง (กัน Error จากช่องว่าง)
     df['ปี'] = pd.to_numeric(df['ปี'], errors='coerce').fillna(0).astype(int)
     df['เดือน'] = pd.to_numeric(df['เดือน'], errors='coerce').fillna(0).astype(int)
     df['จำนวนเงิน'] = pd.to_numeric(df['จำนวนเงิน'], errors='coerce').fillna(0.0)
 
+    # 3. คำนวณปีประเภทต่างๆ
     df['ปีงบประมาณ'] = df.apply(lambda x: x['ปี'] + 1 if x['เดือน'] >= 8 else x['ปี'], axis=1)
     df['ปีการศึกษา'] = df.apply(lambda x: x['ปี'] if x['เดือน'] >= 6 else x['ปี'] - 1, axis=1)
     df['ปีปฏิทิน'] = df['ปี']
+    
     return df
 
 def get_target_budget(year_type, year):
@@ -99,40 +111,25 @@ def save_target_budget(year_type, year, amount):
     df = pd.concat([df, new_row], ignore_index=True)
     df.to_csv(TARGET_FILE, index=False, encoding='utf-8-sig')
 
-def plot_pie_chart(data, label_col, value_col, title):
-    """สร้างกราฟ Pie Chart ที่ Copy ได้"""
+def plot_donut_chart(data, category_col, value_col, title):
     if data.empty:
-        st.info("ไม่มีข้อมูลสำหรับแสดงกราฟ")
+        st.info("ไม่มีข้อมูล")
         return
 
-    # เตรียมข้อมูล
-    labels = data[label_col].astype(str).values
-    sizes = data[value_col].values
-    
-    # สร้างกราฟ
-    fig, ax = plt.subplots(figsize=(6, 6))
-    
-    # สีโทนฟ้า-น้ำเงิน (Payap Theme)
-    colors = plt.cm.Blues([0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
-    
-    wedges, texts, autotexts = ax.pie(
-        sizes, 
-        labels=None, # ปิด label รอบนอกเพื่อความสะอาด
-        autopct='%1.1f%%', 
-        startangle=90, 
-        colors=colors,
-        pctdistance=0.85
+    base = alt.Chart(data).encode(
+        theta=alt.Theta(value_col, stack=True)
     )
-    
-    # วาดวงกลมตรงกลางให้เป็น Donut Chart (ดูทันสมัยขึ้น)
-    centre_circle = plt.Circle((0,0),0.70,fc='white')
-    fig.gca().add_artist(centre_circle)
-    
-    ax.axis('equal')  
-    plt.title(title, fontsize=14, fontfamily='sans-serif')
-    plt.legend(wedges, labels, title="รายการ", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-    
-    st.pyplot(fig) # แสดงผลเป็นรูปภาพ
+    pie = base.mark_arc(innerRadius=60).encode(
+        color=alt.Color(category_col),
+        order=alt.Order(value_col, sort="descending"),
+        tooltip=[category_col, alt.Tooltip(value_col, format=",.2f")]
+    )
+    text = base.mark_text(radius=140).encode(
+        text=alt.Text(value_col, format=",.0f"),
+        order=alt.Order(value_col, sort="descending"),
+        color=alt.value("black")  
+    )
+    st.altair_chart(pie + text, use_container_width=True)
 
 # --- เริ่มต้นระบบ ---
 init_files()
@@ -205,23 +202,22 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
     except:
         raw_df = pd.DataFrame()
         
+    # เรียกฟังก์ชันที่แก้ Bug แล้ว
     df = process_data(raw_df)
 
-    # --- Filter ---
     with st.container():
         st.markdown("##### 🔍 ตัวกรองข้อมูล")
         c1, c2 = st.columns(2)
-        
         with c1:
             year_type_options = ["ปีงบประมาณ", "ปีพุทธศักราช", "ปีการศึกษา"]
             selected_type_label = st.selectbox("1. เลือกประเภทปี", year_type_options)
-            
             type_map = {"ปีงบประมาณ": "ปีงบประมาณ", "ปีพุทธศักราช": "ปีปฏิทิน", "ปีการศึกษา": "ปีการศึกษา"}
             selected_col = type_map[selected_type_label]
 
         with c2:
             current_y = datetime.now().year + 543
-            if not df.empty:
+            # เช็คว่า df มีข้อมูลไหม ถ้าไม่มีให้แสดงแค่ปีปัจจุบัน
+            if not df.empty and df['ปี'].sum() > 0:
                 available_years = sorted(df[selected_col].unique(), reverse=True)
                 if current_y not in available_years: available_years.insert(0, current_y)
             else:
@@ -231,7 +227,6 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
 
     st.markdown("---")
 
-    # --- Budget Setting ---
     with st.expander("⚙️ ตั้งค่าวงเงินงบประมาณ (Budget Setting)", expanded=True):
         col_set1, col_set2 = st.columns([3, 1])
         current_target = get_target_budget(selected_type_label, selected_year)
@@ -249,8 +244,12 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
                 st.success("บันทึกเรียบร้อย")
                 st.rerun()
 
-    # --- Metrics ---
-    filtered_df = df[df[selected_col] == selected_year]
+    # กรองข้อมูล (ถ้า df ว่าง มันจะได้ filtered_df ว่างๆ ไม่ Error แล้ว)
+    if not df.empty:
+        filtered_df = df[df[selected_col] == selected_year]
+    else:
+        filtered_df = pd.DataFrame(columns=df.columns)
+
     total_spent = filtered_df['จำนวนเงิน'].sum()
     remaining_budget = target_input - total_spent
     percent_used = (total_spent / target_input * 100) if target_input > 0 else 0
@@ -263,7 +262,6 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
     
     st.progress(min(percent_used / 100, 1.0))
 
-    # --- Charts (Pie Chart) ---
     st.markdown("---")
     col_chart1, col_chart2 = st.columns(2)
     
@@ -271,10 +269,7 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
         st.subheader("📊 สัดส่วนตามหมวดงบประมาณ")
         if not filtered_df.empty:
             cat_sum = filtered_df.groupby("รหัสหมวด")['จำนวนเงิน'].sum().reset_index()
-            # ใช้ฟังก์ชันสร้าง Pie Chart ที่ก๊อบปี้รูปได้
-            plot_pie_chart(cat_sum, "รหัสหมวด", "จำนวนเงิน", "สัดส่วนการใช้งบแยกตามหมวด")
-            
-            # ตารางข้อมูลประกอบ
+            plot_donut_chart(cat_sum, "รหัสหมวด", "จำนวนเงิน", "สัดส่วนงบ")
             with st.expander("ดูตารางข้อมูล"):
                 st.dataframe(cat_sum.style.format({"จำนวนเงิน": "{:,.2f}"}), hide_index=True)
         else:
@@ -284,14 +279,12 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
         st.subheader("🏢 สัดส่วนตามคณะ/หน่วยงาน")
         if not filtered_df.empty:
             fac_sum = filtered_df.groupby("คณะ")['จำนวนเงิน'].sum().reset_index()
-            plot_pie_chart(fac_sum, "คณะ", "จำนวนเงิน", "สัดส่วนการใช้งบแยกตามคณะ")
-            
+            plot_donut_chart(fac_sum, "คณะ", "จำนวนเงิน", "สัดส่วนคณะ")
             with st.expander("ดูตารางข้อมูล"):
                 st.dataframe(fac_sum.style.format({"จำนวนเงิน": "{:,.2f}"}), hide_index=True)
         else:
             st.info("ไม่มีข้อมูล")
 
-    # Download
     if not filtered_df.empty:
         st.markdown("---")
         with open(DB_FILE, "rb") as f:
