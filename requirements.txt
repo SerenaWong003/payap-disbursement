@@ -1,5 +1,8 @@
 streamlit
 pandas
-matplotlib
+altair
+pypdf
+reportlab
+
 
 
