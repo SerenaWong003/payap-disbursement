@@ -4,67 +4,60 @@ from datetime import datetime
 import os
 
 # --- 1. ตั้งค่าระบบ ---
-st.set_page_config(page_title="ระบบทะเบียนคุมตั้งเบิก มพย.", layout="centered", page_icon="🛡️")
-now = datetime.now()
-thai_year = now.year + 543
-current_date_str = now.strftime(f"%d/%m/{thai_year}")
+st.set_page_config(page_title="ระบบทะเบียนคุมและสรุปงบประมาณ มพย.", layout="wide", page_icon="🛡️")
+
+# ค่าคงที่และไฟล์ข้อมูล
 DB_FILE = "database_claims.csv"
 
-# --- 2. ฟังก์ชันจัดการเลขที่ (ตัดรอบทุก 1 ม.ค.) ---
+# ตัวเลือกหมวดงบประมาณ
+BUDGET_OPTIONS = {
+    "541010001": "หมวดส่งเสริมการวิจัย",
+    "521130002": "ค่าถ่ายเอกสาร",
+    "521130004": "วัสดุสิ้นเปลืองสำนักงาน",
+    "531111005": "ค่ายานพาหนะ",
+    "521140007": "สัมมนาภายใน",
+    "531104002": "ค่าไปรษณียากร"
+}
+
+# --- 2. ฟังก์ชันช่วยงาน (Helper Functions) ---
+
+def get_current_thai_date():
+    now = datetime.now()
+    return now, now.year + 543, now.strftime(f"%d/%m/{now.year + 543}")
+
 def get_next_doc_no():
     if not os.path.exists(DB_FILE):
         return "0203/001"
     try:
         df = pd.read_csv(DB_FILE)
         if df.empty: return "0203/001"
+        
+        now, thai_year, _ = get_current_thai_date()
+        
+        # ตรวจสอบปีล่าสุด (ตัดรอบ 1 มกราคม)
         last_year = int(df['ปี'].iloc[-1])
-        if thai_year > last_year: return "0203/001"
+        if thai_year > last_year:
+            return "0203/001"
+            
         last_doc = str(df['เลขที่ออก'].iloc[-1])
         new_num = int(last_doc.split('/')[-1]) + 1
         return f"0203/{new_num:03d}"
     except:
         return "0203/001"
 
-# --- 3. ส่วน UI ---
-st.title("🛡️ ระบบออกเลขที่เอกสารเบิกจ่ายของสำนักวิจัย")
-st.info(f"📅 วันที่: {current_date_str} | ปี พ.ศ. {thai_year}")
+def load_data():
+    if os.path.exists(DB_FILE):
+        df = pd.read_csv(DB_FILE)
+        return df
+    return pd.DataFrame()
 
-next_doc = get_next_doc_no()
-st.subheader(f"เลขที่เอกสารที่จะออก: :blue[{next_doc}]")
-
-with st.form("main_form", clear_on_submit=True):
-    subject = st.text_input("เรื่อง (Subject)")
-    col1, col2 = st.columns(2)
-    with col1:
-        project_name = st.text_input("ชื่อโครงการวิจัย")
-        total_budget = st.number_input("งบประมาณทั้งโครงการ", min_value=0.0, format="%.2f")
-        faculty = st.text_input("คณะ / หน่วยงาน")
-    with col2:
-        leader_name = st.text_input("ชื่อหัวหน้าโครงการ")
-        claim_amount = st.number_input("จำนวนเงินที่เบิกครั้งนี้", min_value=0.0, format="%.2f")
-        budget_code = st.text_input("รหัสหมวดงบประมาณ")
+# ฟังก์ชันคำนวณปีต่างๆ ตามกฎของuser
+def calculate_period_columns(df):
+    if df.empty: return df
     
-    to_person = st.text_input("เรียน", value="รองอธิการบดีฝ่ายวิชาการและวิจัย,ผู้อำนวยการสำนักการเงิน")
-    submit = st.form_submit_button("✅ บันทึกและออกเลขที่")
-
-if submit:
-    new_row = {
-        "NO": "", "เลขที่ออก": next_doc, "วัน": now.day, "เดือน": now.month, "ปี": thai_year,
-        "ผู้ลงนาม": "ผู้อำนวยการ", "ถึง": to_person, "เรื่อง": subject, "คณะ": faculty,
-        "หัวหน้าโครงการวิจัย": leader_name, "ผู้ประสาน": "", "เงินที่อนุมัติ": total_budget,
-        "จำนวนเงิน": claim_amount, "ชื่อโครงการ": project_name, "รหัสหมวด": budget_code,
-        "บันทึกเมื่อ": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-    df_new = pd.DataFrame([new_row])
-    file_exists = os.path.isfile(DB_FILE)
-    df_new.to_csv(DB_FILE, mode='a', index=False, header=not file_exists, encoding='utf-8-sig')
-    st.success(f"บันทึกเลขที่ {next_doc} สำเร็จ!")
-    st.balloons()
-
-# --- 4. ปุ่ม Export (Sidebar) ---
-st.sidebar.title("📊 ฐานข้อมูล")
-if os.path.exists(DB_FILE):
-    df_db = pd.read_csv(DB_FILE)
-    st.sidebar.write(f"รายการทั้งหมด: {len(df_db)}")
-    with open(DB_FILE, "rb") as f:
-        st.sidebar.download_button("📥 Export CSV (Excel)", f, f"เบิกจ่าย_{thai_year}.csv", "text/csv")
+    # สร้างคอลัมน์ใหม่สำหรับการจัดกลุ่ม
+    df['ปีงบประมาณ'] = df.apply(lambda x: x['ปี'] + 1 if x['เดือน'] >= 8 else x['ปี'], axis=1)
+    df['ปีการศึกษา'] = df.apply(lambda x: x['ปี'] if x['เดือน'] >= 6 else x['ปี'] - 1, axis=1)
+    
+    # เพิ่มชื่อหมวดงบประมาณเข้าไปด้วยเพื่อให้ดูง่าย
+    df['ชื่อหมวด'] = df['รหัสหมวด
