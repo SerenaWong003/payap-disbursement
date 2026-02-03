@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import io
 import altair as alt
+import requests
 
 # --- Library สำหรับ PDF ---
 from pypdf import PdfReader, PdfWriter
@@ -17,43 +18,58 @@ from reportlab.lib.pagesizes import A4
 # ==========================================
 st.set_page_config(page_title="ระบบบริหารจัดการงบประมาณ มพย.", layout="wide", page_icon="🛡️")
 
+# ไฟล์ระบบ
 DB_FILE = "database_claims.csv"
 TARGET_FILE = "budget_targets.csv"
-TEMPLATE_PDF = "ใบเบิก.pdf"          # ไฟล์ที่นายหญิงอัปโหลดมา
+TEMPLATE_PDF = "ใบเบิก.pdf"         
 FONT_FILE = "THSarabunNew.ttf"       
+FONT_URL = "https://github.com/gungunss/ThaiFonts/raw/master/THSarabunNew.ttf"
 
-# --- พิกัดข้อความสำหรับใบเบิก PDF (จูนใหม่ตามเอกสารจริง) ---
-# หน่วยเป็น Point (X แนวนอน, Y แนวตั้ง วัดจากมุมล่างซ้าย)
-# A4 Size = 595 x 842 points
+# --- 🎯 ตั้งค่าพิกัดข้อความ (PDF CONFIG) ---
+# หน่วยเป็น Point (A4 กว้าง=595, สูง=842)
+# X = แนวนอน (ซ้ายไปขวา), Y = แนวตั้ง (ล่างขึ้นบน)
 PDF_CONFIG = {
-    "faculty":    (110, 775),  # หน่วยงาน (บรรทัด 1 ซ้าย)
-    "doc_no":     (80, 752),   # ที่ มพย... (บรรทัด 2 ซ้าย)
-    "date_day":   (375, 752),  # วันที่
-    "date_month": (425, 752),  # เดือน
-    "date_year":  (490, 752),  # พ.ศ.
+    # บรรทัด 1: หน่วยงาน
+    "faculty":    (130, 755),  
     
-    "subject":    (80, 728),   # เรื่อง
-    "to_who":     (80, 705),   # เรียน
+    # บรรทัด 2: เลขที่ + วันที่
+    "doc_no":     (100, 730),  
+    "date_day":   (380, 730),  
+    "date_month": (440, 730),  
+    "date_year":  (510, 730),  
     
-    "attach_1":   (130, 680),  # สิ่งที่ส่งมาด้วย 1
+    # บรรทัด 3: เรื่อง
+    "subject":    (100, 705),  
     
-    "amount":     (180, 610),  # จำนวนเงินตัวเลข
-    "amount_txt": (330, 610),  # จำนวนเงินตัวอักษร (...บาทถ้วน)
+    # บรรทัด 4: เรียน
+    "to_who":     (100, 680),  
     
-    "pay_to":     (100, 585),  # สั่งจ่ายให้
-    "receive_date":(430, 585), # ขอรับเงินวันที่
+    # บรรทัด 5-6: สิ่งที่ส่งมาด้วย
+    "attach_1":   (160, 655),  
     
-    # "check_bank": (40, 538), # ติ๊กช่องบัญชีธนาคาร (อาจต้องวาดสี่เหลี่ยมทับ หรือ X)
-    "bank_detail":(250, 538),  # เลขที่บัญชี/ชื่อธนาคาร
+    # บรรทัด 7: จำนวนเงิน (ตัวเลข และ ตัวอักษร)
+    "amount":     (180, 605),  
+    "amount_txt": (350, 605),  # อยู่บรรทัดเดียวกันเยื้องขวา
     
-    "project":    (180, 515),  # กิจกรรม (โครงการ)
+    # บรรทัด 8: สั่งจ่าย + วันรับเงิน
+    "pay_to":     (120, 555),  
+    "receive_date":(400, 555), 
     
-    # "budget_check": (165, 470), # ติ๊กช่องในงบประมาณ
-    "budget_cat": (230, 470),  # ประเภทงบประมาณ
-    "faculty_budget": (200, 492), # ใช้งบประมาณของหน่วยงาน...
+    # บรรทัด 9: ธนาคาร (ขยับลงมาอีกนิด)
+    "bank_detail":(250, 505),  
     
-    "leader":     (380, 395),  # ผู้เบิกเงิน (ชื่อ)
-    "position":   (380, 370),  # ตำแหน่ง
+    # บรรทัด 10: โครงการ
+    "project":    (200, 480),  
+    
+    # บรรทัด 11: หน่วยงาน
+    "faculty_budget": (240, 455), 
+    
+    # บรรทัด 12: ประเภทงบ (ขยับลงมา)
+    "budget_cat": (240, 430),  
+    
+    # ส่วนลงชื่อ (ย้ายลงมาด้านล่างขวา)
+    "leader":     (370, 320),  
+    "position":   (370, 300),  
 }
 
 # --- Master Data ---
@@ -74,19 +90,29 @@ FACULTY_MASTER = [
 ]
 
 # ==========================================
-# 2. ฟังก์ชันระบบ
+# 2. ฟังก์ชันระบบจัดการไฟล์
 # ==========================================
+
+def check_and_download_font():
+    if not os.path.exists(FONT_FILE):
+        try:
+            response = requests.get(FONT_URL)
+            if response.status_code == 200:
+                with open(FONT_FILE, "wb") as f: f.write(response.content)
+        except: pass
 
 def init_files():
     if not os.path.exists(DB_FILE):
         cols = ["NO", "เลขที่ออก", "วัน", "เดือน", "ปี", "ผู้ลงนาม", "ถึง", "เรื่อง", 
                 "คณะ", "หัวหน้าโครงการวิจัย", "ผู้ประสาน", "เงินที่อนุมัติ", 
                 "จำนวนเงิน", "ชื่อโครงการ", "รหัสหมวด", "บันทึกเมื่อ", 
-                "สั่งจ่ายให้", "ธนาคาร"] # เพิ่มคอลัมน์ใหม่
+                "สิ่งที่ส่งมาด้วย", "จำนวนเงิน_ตัวอักษร", "สั่งจ่ายให้", "ธนาคาร", "ตำแหน่ง"]
         pd.DataFrame(columns=cols).to_csv(DB_FILE, index=False, encoding='utf-8-sig')
     
     if not os.path.exists(TARGET_FILE):
         pd.DataFrame(columns=["year_type", "year", "amount"]).to_csv(TARGET_FILE, index=False, encoding='utf-8-sig')
+    
+    check_and_download_font()
 
 def get_current_date():
     now = datetime.now()
@@ -123,6 +149,9 @@ def process_data(df):
     df['ปีปฏิทิน'] = df['ปี']
     return df
 
+# ==========================================
+# 3. PDF Generator & Budget Functions
+# ==========================================
 def get_target_budget(year_type, year):
     if not os.path.exists(TARGET_FILE): return 0.0
     try:
@@ -141,9 +170,6 @@ def save_target_budget(year_type, year, amount):
     df = pd.concat([df, new_row], ignore_index=True)
     df.to_csv(TARGET_FILE, index=False, encoding='utf-8-sig')
 
-# ==========================================
-# 3. PDF Generator
-# ==========================================
 def create_filled_pdf(data):
     if not os.path.exists(TEMPLATE_PDF):
         st.error(f"❌ ไม่พบไฟล์ {TEMPLATE_PDF}")
@@ -158,40 +184,39 @@ def create_filled_pdf(data):
     can = canvas.Canvas(packet, pagesize=A4)
     can.setFont(font_name, 14)
 
-    # --- ส่วนหัว ---
-    can.drawString(PDF_CONFIG["faculty"][0], PDF_CONFIG["faculty"][1], data["คณะ"])
-    can.drawString(PDF_CONFIG["doc_no"][0], PDF_CONFIG["doc_no"][1], data["เลขที่ออก"])
+    # วาดข้อมูลตามพิกัดที่ตั้งไว้ด้านบน
+    # 1. ส่วนหัว
+    can.drawString(PDF_CONFIG["faculty"][0], PDF_CONFIG["faculty"][1], str(data.get("คณะ", "")))
+    can.drawString(PDF_CONFIG["doc_no"][0], PDF_CONFIG["doc_no"][1], str(data.get("เลขที่ออก", "")))
     can.drawString(PDF_CONFIG["date_day"][0], PDF_CONFIG["date_day"][1], str(data["วัน"]))
     can.drawString(PDF_CONFIG["date_month"][0], PDF_CONFIG["date_month"][1], str(data["เดือน_ตัวอักษร"]))
     can.drawString(PDF_CONFIG["date_year"][0], PDF_CONFIG["date_year"][1], str(data["ปี"]))
     
-    can.drawString(PDF_CONFIG["subject"][0], PDF_CONFIG["subject"][1], data["เรื่อง"])
-    can.drawString(PDF_CONFIG["to_who"][0], PDF_CONFIG["to_who"][1], data["ถึง"])
+    # 2. รายละเอียด
+    can.drawString(PDF_CONFIG["subject"][0], PDF_CONFIG["subject"][1], str(data.get("เรื่อง", "")))
+    can.drawString(PDF_CONFIG["to_who"][0], PDF_CONFIG["to_who"][1], str(data.get("ถึง", "")))
+    can.drawString(PDF_CONFIG["attach_1"][0], PDF_CONFIG["attach_1"][1], str(data.get("สิ่งที่ส่งมาด้วย", "-")))
     
-    # --- รายละเอียด ---
-    can.drawString(PDF_CONFIG["attach_1"][0], PDF_CONFIG["attach_1"][1], data.get("สิ่งที่ส่งมาด้วย", "-"))
-    
+    # 3. การเงิน
     can.drawString(PDF_CONFIG["amount"][0], PDF_CONFIG["amount"][1], f"{data['จำนวนเงิน']:,.2f}")
     can.drawString(PDF_CONFIG["amount_txt"][0], PDF_CONFIG["amount_txt"][1], f"({data.get('จำนวนเงิน_ตัวอักษร', '')})")
     
-    can.drawString(PDF_CONFIG["pay_to"][0], PDF_CONFIG["pay_to"][1], data.get("สั่งจ่ายให้", ""))
-    # วันรับเงิน (ใช้ค่าเดียวกับวันที่ทำเอกสารไปก่อน หรือเว้นว่าง)
+    can.drawString(PDF_CONFIG["pay_to"][0], PDF_CONFIG["pay_to"][1], str(data.get("สั่งจ่ายให้", "")))
     can.drawString(PDF_CONFIG["receive_date"][0], PDF_CONFIG["receive_date"][1], f"{data['วัน']} {data['เดือน_ตัวอักษร']} {data['ปี']}")
     
-    # ข้อมูลธนาคาร
-    can.setFont(font_name, 12)
-    can.drawString(PDF_CONFIG["bank_detail"][0], PDF_CONFIG["bank_detail"][1], data.get("ธนาคาร", ""))
-    
+    can.setFont(font_name, 12) # ลดขนาดนิดนึงสำหรับเลขบัญชี
+    can.drawString(PDF_CONFIG["bank_detail"][0], PDF_CONFIG["bank_detail"][1], str(data.get("ธนาคาร", "")))
     can.setFont(font_name, 14)
-    can.drawString(PDF_CONFIG["project"][0], PDF_CONFIG["project"][1], data["ชื่อโครงการ"])
     
-    # --- งบประมาณ ---
-    can.drawString(PDF_CONFIG["faculty_budget"][0], PDF_CONFIG["faculty_budget"][1], data["คณะ"])
-    can.drawString(PDF_CONFIG["budget_cat"][0], PDF_CONFIG["budget_cat"][1], data["รหัสหมวด"])
+    can.drawString(PDF_CONFIG["project"][0], PDF_CONFIG["project"][1], str(data.get("ชื่อโครงการ", "")))
     
-    # --- ลงชื่อ ---
-    can.drawString(PDF_CONFIG["leader"][0], PDF_CONFIG["leader"][1], f"({data['หัวหน้าโครงการวิจัย']})")
-    can.drawString(PDF_CONFIG["position"][0], PDF_CONFIG["position"][1], data.get("ตำแหน่ง", ""))
+    # 4. งบประมาณ
+    can.drawString(PDF_CONFIG["faculty_budget"][0], PDF_CONFIG["faculty_budget"][1], str(data.get("คณะ", "")))
+    can.drawString(PDF_CONFIG["budget_cat"][0], PDF_CONFIG["budget_cat"][1], str(data.get("รหัสหมวด", "")))
+    
+    # 5. ลงชื่อ
+    can.drawString(PDF_CONFIG["leader"][0], PDF_CONFIG["leader"][1], f"({data.get('หัวหน้าโครงการวิจัย', '')})")
+    can.drawString(PDF_CONFIG["position"][0], PDF_CONFIG["position"][1], str(data.get("ตำแหน่ง", "")))
 
     can.save()
     packet.seek(0)
@@ -209,7 +234,7 @@ def create_filled_pdf(data):
         out_stream.seek(0)
         return out_stream
     except Exception as e:
-        st.error(f"เกิดข้อผิดพลาดในการสร้าง PDF: {e}")
+        st.error(f"PDF Error: {e}")
         return None
 
 def plot_donut_chart(data, category_col, value_col, title):
@@ -232,16 +257,15 @@ def plot_donut_chart(data, category_col, value_col, title):
 # ==========================================
 # 4. Main UI
 # ==========================================
-
 init_files()
 
 st.sidebar.title("🛡️ เมนูหลัก")
 menu = st.sidebar.radio("เลือกเมนู", ["📝 บันทึกตั้งเบิก", "📊 สรุปและคุมงบประมาณ"])
-
 st.sidebar.markdown("---")
 if st.sidebar.button("⚠️ ล้างฐานข้อมูลทั้งหมด"):
     if os.path.exists(DB_FILE): os.remove(DB_FILE)
     if os.path.exists(TARGET_FILE): os.remove(TARGET_FILE)
+    if os.path.exists(FONT_FILE): os.remove(FONT_FILE)
     init_files()
     st.sidebar.success("ล้างข้อมูลเรียบร้อย!")
     st.rerun()
@@ -256,30 +280,25 @@ if menu == "📝 บันทึกตั้งเบิก":
     if 'pdf_bytes' not in st.session_state: st.session_state['pdf_bytes'] = None
 
     with st.form("entry_form", clear_on_submit=False):
-        # แถว 1: เรื่อง เรียน
         c1, c2 = st.columns([2, 1])
         with c1: subject = st.text_input("เรื่อง")
-        with c2: to_who = st.text_input("เรียน", value="หัวหน้าแผนกการเงิน") # แก้ตามแบบฟอร์ม
+        with c2: to_who = st.text_input("เรียน", value="หัวหน้าแผนกการเงิน")
         
-        # แถว 2: สิ่งที่ส่งมาด้วย (เพิ่มใหม่)
-        attachments = st.text_input("สิ่งที่ส่งมาด้วย (เช่น ใบเสร็จรับเงิน 3 ฉบับ)")
+        attachments = st.text_input("สิ่งที่ส่งมาด้วย")
 
-        # แถว 3: โครงการ & คณะ
         c3, c4 = st.columns(2)
         with c3: project = st.text_input("ใช้ในกิจกรรม (โครงการ)")
-        with c4: faculty = st.selectbox("หน่วยงานเจ้าของงบประมาณ", FACULTY_MASTER)
+        with c4: faculty = st.selectbox("หน่วยงาน", FACULTY_MASTER)
 
         st.markdown("---")
-        # แถว 4: ข้อมูลการเงิน (เพิ่มใหม่ตามฟอร์ม)
         c5, c6 = st.columns(2)
         with c5: 
-            amount = st.number_input("จำนวนเงิน (บาท)", min_value=0.0, format="%.2f")
+            amount = st.number_input("จำนวนเงินที่ขอเบิก (บาท)", min_value=0.0, format="%.2f")
             amount_text = st.text_input("จำนวนเงินตัวอักษร (เช่น หนึ่งพันบาทถ้วน)")
         with c6:
             budget_total = st.number_input("วงเงินงบประมาณทั้งโครงการ (บาท)", min_value=0.0, format="%.2f")
             budget_cat = st.selectbox("ประเภทงบประมาณ", list(BUDGET_MASTER.keys()), format_func=lambda x: f"{x} - {BUDGET_MASTER[x]}")
 
-        # แถว 5: การจ่ายเงิน (เพิ่มใหม่)
         st.markdown("##### ข้อมูลการสั่งจ่าย")
         c7, c8, c9 = st.columns(3)
         with c7: pay_to = st.text_input("สั่งจ่ายให้ (ระบุชื่อ/บริษัท)")
@@ -303,16 +322,16 @@ if menu == "📝 บันทึกตั้งเบิก":
                 "จำนวนเงิน": amount, "ชื่อโครงการ": project,
                 "รหัสหมวด": f"{budget_cat} {BUDGET_MASTER[budget_cat]}",
                 "บันทึกเมื่อ": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                # Field ใหม่
                 "สิ่งที่ส่งมาด้วย": attachments,
                 "จำนวนเงิน_ตัวอักษร": amount_text,
                 "สั่งจ่ายให้": pay_to,
                 "ธนาคาร": bank_detail,
                 "ตำแหน่ง": position
             }
-            # บันทึก CSV (เพิ่มคอลัมน์ใหม่ลงไปถ้ามี)
-            df_curr = pd.read_csv(DB_FILE)
-            # ถ้ามีคอลัมน์ใหม่ที่ไม่ตรงกับ CSV เดิม ให้ concat แบบฉลาด
+            try:
+                df_curr = pd.read_csv(DB_FILE)
+            except: df_curr = pd.DataFrame()
+            
             df_new = pd.DataFrame([new_data])
             df_out = pd.concat([df_curr, df_new], ignore_index=True)
             df_out.to_csv(DB_FILE, index=False, encoding='utf-8-sig')
@@ -335,7 +354,6 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
     except: raw_df = pd.DataFrame()
     df = process_data(raw_df)
 
-    # Filter
     with st.container():
         st.markdown("##### 🔍 ตัวกรองข้อมูล")
         c1, c2 = st.columns(2)
@@ -353,7 +371,6 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
             selected_year = st.selectbox("2. เลือกปี (พ.ศ.)", available_years)
 
     st.markdown("---")
-    # Budget Setting
     with st.expander("⚙️ ตั้งค่าวงเงินงบประมาณ", expanded=True):
         col_set1, col_set2 = st.columns([3, 1])
         current_target = get_target_budget(selected_type_label, selected_year)
@@ -393,10 +410,4 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
         if not filtered_df.empty:
             fac_sum = filtered_df.groupby("คณะ")['จำนวนเงิน'].sum().reset_index()
             plot_donut_chart(fac_sum, "คณะ", "จำนวนเงิน", "สัดส่วนคณะ")
-            with st.expander("ดูตารางข้อมูล"): st.dataframe(fac_sum.style.format({"จำนวนเงิน": "{:,.2f}"}), hide_index=True)
-        else: st.info("ไม่มีข้อมูล")
-
-    if not filtered_df.empty:
-        st.markdown("---")
-        with open(DB_FILE, "rb") as f:
-            st.download_button("📥 ดาวน์โหลดข้อมูลทั้งหมด (CSV)", f, "database_claims.csv", "text/csv")
+            with st.expander("ดูตารางข้อมูล"): st.dataframe(fac_sum.style.format({"จำนวน
