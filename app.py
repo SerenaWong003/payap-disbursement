@@ -283,4 +283,16 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
     with col_chart2:
         st.subheader("🏢 สัดส่วนตามคณะ/หน่วยงาน")
         if not filtered_df.empty:
-            fac_sum =
+            fac_sum = filtered_df.groupby("คณะ")['จำนวนเงิน'].sum().reset_index()
+            plot_pie_chart(fac_sum, "คณะ", "จำนวนเงิน", "สัดส่วนการใช้งบแยกตามคณะ")
+            
+            with st.expander("ดูตารางข้อมูล"):
+                st.dataframe(fac_sum.style.format({"จำนวนเงิน": "{:,.2f}"}), hide_index=True)
+        else:
+            st.info("ไม่มีข้อมูล")
+
+    # Download
+    if not filtered_df.empty:
+        st.markdown("---")
+        with open(DB_FILE, "rb") as f:
+            st.download_button("📥 ดาวน์โหลดข้อมูลทั้งหมด (CSV)", f, "database_claims.csv", "text/csv")
