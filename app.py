@@ -27,14 +27,14 @@ FONT_URL = "https://github.com/gungunss/ThaiFonts/raw/master/THSarabunNew.ttf"
 
 # --- 🎯 ตั้งค่าพิกัดข้อความ (PDF CONFIG) ---
 PDF_CONFIG = {
-    "faculty":    (130, 755), "doc_no":     (100, 730),  
-    "date_day":   (380, 730), "date_month": (440, 730), "date_year":  (510, 730),  
+    "faculty":    (130, 720), "doc_no":     (100, 700),  
+    "date_day":   (250, 730), "date_month": (440, 730), "date_year":  (510, 730),  
     "subject":    (100, 705), "to_who":     (100, 680),  
-    "attach_1":   (160, 655),  
-    "amount":     (180, 605), "amount_txt": (350, 605),  
-    "pay_to":     (120, 555), "receive_date":(400, 555), 
+    "attach_1":   (160, 600),  
+    "amount":     (200, 570), "amount_txt": (300, 570),  
+    "pay_to":     (115, 555), "receive_date":(300, 555), 
     "bank_detail":(250, 505), "project":    (200, 480),  
-    "faculty_budget": (240, 455), "budget_cat": (240, 430),  
+    "faculty_budget": (240, 440), "budget_cat": (240, 430),  
     "leader":     (370, 320), "position":   (370, 300),  
 }
 
@@ -305,7 +305,7 @@ if menu == "📝 บันทึกตั้งเบิก":
 
 # --- หน้าสรุป ---
 elif menu == "📊 สรุปและคุมงบประมาณ":
-    st.title("📊 ศูนย์บัญชาการงบประมาณ")
+    st.title("📊 ภาพรวมงบประมาณ")
     try: raw_df = pd.read_csv(DB_FILE, encoding='utf-8-sig')
     except: raw_df = pd.DataFrame()
     df = process_data(raw_df)
