@@ -24,50 +24,52 @@ TEMPLATE_PDF = "ใบเบิก.pdf"
 FONT_FILE = "THSarabunNew.ttf"       
 FONT_URL = "https://github.com/gungunss/ThaiFonts/raw/master/THSarabunNew.ttf"
 
-# --- 🎯 ฐานข้อมูลพิกัดข้อความ (PDF CONFIG) จัดเรียงบรรทัดใหม่ ---
-# X = แนวนอน (ซ้าย->ขวา), Y = แนวตั้ง (ล่าง->บน)
+# --- 🎯 ฐานข้อมูลพิกัดข้อความ (PDF CONFIG) จัดกลุ่มล็อกบรรทัด ---
+# แกน Y (ความสูง) ของข้อมูลบรรทัดเดียวกันจะเท่ากันเสมอ เพื่อไม่ให้ข้อความเด้ง
 PDF_CONFIG = {
-    # บรรทัดบนสุด: หน่วยงาน และ วันที่
-    "faculty":    (150, 765),
-    "date_day":   (360, 765),
-    "date_month": (410, 765),
-    "date_year":  (490, 765),
+    # บรรทัดที่ 1 (หน่วยงาน)
+    "faculty":    (160, 765),
     
-    # บรรทัดที่ 2: ที่ มพย
-    "doc_no":     (120, 740),
+    # บรรทัดที่ 2 (ที่ มพย และ วันที่)
+    "doc_no":     (100, 740),
+    "date_day":   (360, 740),
+    "date_month": (410, 740),
+    "date_year":  (490, 740),
     
-    # บรรทัดที่ 3: เรื่อง
-    "subject":    (120, 715),
+    # บรรทัดที่ 3 (เรื่อง)
+    "subject":    (100, 715),
     
-    # บรรทัดที่ 4: สิ่งที่ส่งมาด้วย
-    "attach_1":   (140, 665),
+    # บรรทัดที่ 4 (สิ่งที่ส่งมาด้วย)
+    "attach_1":   (130, 665),
     
-    # บรรทัดที่ 5: ขอเบิกเงิน และ จำนวนเงิน
-    "check_req":  (72, 625),  # กากบาท [X] หน้าขอเบิกเงิน
-    "amount":     (200, 625),
-    "amount_txt": (350, 625),
+    # บรรทัดที่ 5 (ขอเบิกเงิน และ จำนวนเงินตัวเลข)
+    "check_req":  (72, 625),   # กากบาท [X] หน้าขอเบิกเงิน
+    "amount":     (190, 625),  # ตัวเลขจำนวนเงิน
     
-    # บรรทัดที่ 6: สั่งจ่ายให้ และ รับเงินวันที่
-    "pay_to":     (140, 580),
-    "req_d":      (350, 580),
-    "req_m":      (400, 580),
-    "req_y":      (480, 580),
+    # บรรทัดที่ 6 (จำนวนเงินตัวอักษร - อยู่บรรทัดถัดลงมาตรงวงเล็บ)
+    "amount_txt": (150, 600),
     
-    # บรรทัดที่ 7: ธนาคาร
-    "check_bank": (72, 515),  # กากบาท [X] หน้าเข้าบัญชีธนาคาร
-    "bank_detail":(230, 515),
+    # บรรทัดที่ 7 (สั่งจ่าย และ วันที่รับเงิน)
+    "pay_to":     (130, 575),
+    "req_d":      (340, 575),
+    "req_m":      (390, 575),
+    "req_y":      (470, 575),
     
-    # บรรทัดที่ 8: กิจกรรมโครงการ
-    "project":    (230, 485),
+    # บรรทัดที่ 8 (เข้าบัญชีธนาคาร)
+    "check_bank": (72, 500),   # กากบาท [X] หน้าเข้าบัญชีธนาคาร
+    "bank_detail":(230, 500),  # ชื่อธนาคารและเลขบัญชี
     
-    # บรรทัดที่ 9: งบประมาณของหน่วยงาน
-    "faculty_budget": (230, 455),
+    # บรรทัดที่ 9 (เพื่อใช้ในกิจกรรม)
+    "project":    (210, 475),
     
-    # บรรทัดที่ 10: ประเภทงบ
-    "check_budget": (72, 425), # กากบาท [X] หน้าในงบประมาณ
-    "budget_cat": (180, 425),
+    # บรรทัดที่ 10 (งบประมาณของหน่วยงาน)
+    "faculty_budget": (240, 450),
     
-    # บรรทัดที่ 11: ลงชื่อ
+    # บรรทัดที่ 11 (ในงบประมาณข้อ)
+    "check_budget": (72, 425), # กากบาท [X] หน้าในงบประมาณข้อ
+    "budget_cat": (180, 425),  # หมวดงบประมาณ
+    
+    # ส่วนลงชื่อผู้เบิก (ด้านล่างขวา)
     "leader":     (360, 310),
     "position":   (360, 285),
 }
@@ -105,10 +107,12 @@ def check_and_download_font():
 
 def init_files():
     if not os.path.exists(DB_FILE):
-        cols = ["NO", "เลขที่ออก", "วัน", "เดือน", "ปี", "ผู้ลงนาม", "ถึง", "เรื่อง", 
-                "คณะ", "หัวหน้าโครงการวิจัย", "ผู้ประสาน", "เงินที่อนุมัติ", 
-                "จำนวนเงิน", "ชื่อโครงการ", "รหัสหมวด", "บันทึกเมื่อ", 
-                "สิ่งที่ส่งมาด้วย", "จำนวนเงิน_ตัวอักษร", "สั่งจ่ายให้", "ธนาคาร", "ตำแหน่ง"]
+        cols = [
+            "NO", "เลขที่ออก", "วัน", "เดือน", "ปี", "ผู้ลงนาม", "ถึง", "เรื่อง", 
+            "คณะ", "หัวหน้าโครงการวิจัย", "ผู้ประสาน", "เงินที่อนุมัติ", 
+            "จำนวนเงิน", "ชื่อโครงการ", "รหัสหมวด", "บันทึกเมื่อ", 
+            "สิ่งที่ส่งมาด้วย", "จำนวนเงิน_ตัวอักษร", "สั่งจ่ายให้", "ธนาคาร", "ตำแหน่ง"
+        ]
         pd.DataFrame(columns=cols).to_csv(DB_FILE, index=False, encoding='utf-8-sig')
     
     if not os.path.exists(TARGET_FILE):
@@ -128,25 +132,39 @@ def get_current_date():
 
 def get_next_doc_no():
     try:
-        if not os.path.exists(DB_FILE): return "0203/001"
+        if not os.path.exists(DB_FILE): 
+            return "0203/001"
+            
         df = pd.read_csv(DB_FILE, encoding='utf-8-sig')
-        if df.empty: return "0203/001"
+        if df.empty: 
+            return "0203/001"
+            
         df['ปี'] = pd.to_numeric(df['ปี'], errors='coerce').fillna(0).astype(int)
         _, current_year, _, _ = get_current_date()
-        if current_year > df['ปี'].max(): return "0203/001"
+        
+        if current_year > df['ปี'].max(): 
+            return "0203/001"
+            
         last_doc = str(df['เลขที่ออก'].iloc[-1])
-        if "/" in last_doc: return f"0203/{int(last_doc.split('/')[-1]) + 1:03d}"
+        if "/" in last_doc: 
+            return f"0203/{int(last_doc.split('/')[-1]) + 1:03d}"
+            
         return "0203/001"
     except: 
         return "0203/001"
 
 def process_data(df):
-    if df.empty: return df
+    if df.empty: 
+        return df
+        
     required_cols = ['ปี', 'เดือน', 'จำนวนเงิน', 'ปีงบประมาณ', 'ปีการศึกษา', 'ปีปฏิทิน']
     for col in required_cols:
         if col not in df.columns: 
-            df[col] = pd.Series(dtype='float' if col == 'จำนวนเงิน' else 'int')
-            
+            if col == 'จำนวนเงิน':
+                df[col] = pd.Series(dtype='float')
+            else:
+                df[col] = pd.Series(dtype='int')
+                
     df['ปี'] = pd.to_numeric(df['ปี'], errors='coerce').fillna(0).astype(int)
     df['เดือน'] = pd.to_numeric(df['เดือน'], errors='coerce').fillna(0).astype(int)
     df['จำนวนเงิน'] = pd.to_numeric(df['จำนวนเงิน'], errors='coerce').fillna(0.0)
@@ -154,31 +172,36 @@ def process_data(df):
     df['ปีงบประมาณ'] = df.apply(lambda x: int(x['ปี']) + 1 if int(x['เดือน']) >= 8 else int(x['ปี']), axis=1)
     df['ปีการศึกษา'] = df.apply(lambda x: int(x['ปี']) if int(x['เดือน']) >= 6 else int(x['ปี']) - 1, axis=1)
     df['ปีปฏิทิน'] = df['ปี']
+    
     return df
 
 # ==========================================
-# 3. PDF Generator
+# 3. PDF Generator & Budget Functions
 # ==========================================
 def get_target_budget(year_type, year):
-    if not os.path.exists(TARGET_FILE): return 0.0
+    if not os.path.exists(TARGET_FILE): 
+        return 0.0
     try:
         df = pd.read_csv(TARGET_FILE)
         match = df[(df['year_type'] == year_type) & (df['year'] == year)]
-        if not match.empty: return float(match['amount'].iloc[0])
+        if not match.empty: 
+            return float(match['amount'].iloc[0])
         return 0.0
-    except: return 0.0
+    except: 
+        return 0.0
 
 def save_target_budget(year_type, year, amount):
     if not os.path.exists(TARGET_FILE):
         df = pd.DataFrame(columns=["year_type", "year", "amount"])
     else: 
         df = pd.read_csv(TARGET_FILE)
+        
     df = df[~((df['year_type'] == year_type) & (df['year'] == year))]
     new_row = pd.DataFrame([{"year_type": year_type, "year": year, "amount": amount}])
     df = pd.concat([df, new_row], ignore_index=True)
     df.to_csv(TARGET_FILE, index=False, encoding='utf-8-sig')
 
-def create_filled_pdf(data, show_grid=False):
+def create_filled_pdf(data):
     if not os.path.exists(TEMPLATE_PDF):
         st.error(f"❌ ไม่พบไฟล์ {TEMPLATE_PDF}")
         return None
@@ -190,21 +213,6 @@ def create_filled_pdf(data, show_grid=False):
     
     packet = io.BytesIO()
     can = canvas.Canvas(packet, pagesize=A4)
-    
-    # 🛠️ โหมดสร้างไม้บรรทัด (Grid Mode)
-    if show_grid:
-        can.setStrokeColorRGB(0.9, 0.5, 0.5) # สีแดงอ่อน
-        can.setFont("Helvetica", 7)
-        # ตีเส้นแนวตั้ง (แกน X)
-        for i in range(0, 600, 20):
-            can.line(i, 0, i, 842)
-            can.drawString(i+2, 830, str(i))
-        # ตีเส้นแนวนอน (แกน Y)
-        for j in range(0, 850, 20):
-            can.line(0, j, 595, j)
-            can.drawString(5, j+2, str(j))
-            
-    can.setFillColorRGB(0, 0, 0) # กลับมาใช้สีดำเขียนข้อความ
     can.setFont(font_name, 14)
 
     def draw(key, text):
@@ -212,7 +220,7 @@ def create_filled_pdf(data, show_grid=False):
             base_x, base_y = PDF_CONFIG[key]
             can.drawString(base_x, base_y, str(text))
 
-    # --- เริ่มวาดข้อความ ---
+    # --- วาดข้อความลง PDF ---
     draw("faculty", data.get("คณะ", ""))
     draw("doc_no", data.get("เลขที่ออก", ""))
     draw("date_day", data["วัน"])
@@ -220,6 +228,8 @@ def create_filled_pdf(data, show_grid=False):
     draw("date_year", data["ปี"])
     
     draw("subject", data.get("เรื่อง", ""))
+    # ไม่ดึง "ถึง" หรือ "เรียน" มาวาดใน PDF แล้ว
+    
     draw("attach_1", data.get("สิ่งที่ส่งมาด้วย", "-"))
     
     can.setFont("Helvetica-Bold", 14)
@@ -272,7 +282,9 @@ def create_filled_pdf(data, show_grid=False):
         return None
 
 def plot_donut_chart(data, category_col, value_col):
-    if data.empty: return
+    if data.empty:
+        st.info("ไม่มีข้อมูล")
+        return
     base = alt.Chart(data).encode(theta=alt.Theta(value_col, stack=True))
     pie = base.mark_arc(innerRadius=60).encode(
         color=alt.Color(category_col),
@@ -291,19 +303,18 @@ def plot_donut_chart(data, category_col, value_col):
 # ==========================================
 init_files()
 
+# --- Sidebar ---
 st.sidebar.title("🛡️ เมนูหลัก")
 menu = st.sidebar.radio("เลือกเมนู", ["📝 บันทึกตั้งเบิก", "📊 สรุปและคุมงบประมาณ"])
 
-# --- สวิตช์เปิดไม้บรรทัด ---
-st.sidebar.markdown("---")
-show_grid_mode = st.sidebar.checkbox("🛠️ เปิดโหมดไม้บรรทัด (เช็คพิกัด PDF)")
-if show_grid_mode:
-    st.sidebar.info("โหมดนี้จะพิมพ์เส้นตารางลงใน PDF เพื่อให้ง่ายต่อการหาพิกัด (X,Y)")
-
 st.sidebar.markdown("---")
 if st.sidebar.button("⚠️ ล้างฐานข้อมูลทั้งหมด"):
-    if os.path.exists(DB_FILE): os.remove(DB_FILE)
-    if os.path.exists(TARGET_FILE): os.remove(TARGET_FILE)
+    if os.path.exists(DB_FILE): 
+        os.remove(DB_FILE)
+    if os.path.exists(TARGET_FILE): 
+        os.remove(TARGET_FILE)
+    if os.path.exists(FONT_FILE): 
+        os.remove(FONT_FILE)
     init_files()
     st.sidebar.success("ล้างข้อมูลเรียบร้อย!")
     st.rerun()
@@ -320,14 +331,18 @@ if menu == "📝 บันทึกตั้งเบิก":
 
     with st.form("entry_form", clear_on_submit=False):
         c1, c2 = st.columns([2, 1])
-        with c1: subject = st.text_input("เรื่อง")
-        with c2: to_who = st.text_input("เรียน", value="หัวหน้าแผนกการเงิน")
+        with c1: 
+            subject = st.text_input("เรื่อง")
+        with c2: 
+            to_who = st.text_input("เรียน", value="หัวหน้าแผนกการเงิน")
         
         attachments = st.text_input("สิ่งที่ส่งมาด้วย (เช่น ใบเสร็จรับเงิน 3 ฉบับ)")
 
         c3, c4 = st.columns(2)
-        with c3: project = st.text_input("ใช้ในกิจกรรม (โครงการ)")
-        with c4: faculty = st.selectbox("หน่วยงานเจ้าของงบประมาณ", FACULTY_MASTER)
+        with c3: 
+            project = st.text_input("ใช้ในกิจกรรม (โครงการ)")
+        with c4: 
+            faculty = st.selectbox("หน่วยงานเจ้าของงบประมาณ", FACULTY_MASTER)
 
         st.markdown("---")
         c5, c6 = st.columns(2)
@@ -340,8 +355,10 @@ if menu == "📝 บันทึกตั้งเบิก":
 
         st.markdown("##### ข้อมูลการสั่งจ่าย")
         c7, c8, c9 = st.columns(3)
-        with c7: pay_to = st.text_input("สั่งจ่ายให้ (ระบุชื่อ/บริษัท)")
-        with c8: bank_detail = st.text_input("โอนเข้าบัญชีธนาคาร (ระบุชื่อธนาคารและเลขที่)")
+        with c7: 
+            pay_to = st.text_input("สั่งจ่ายให้ (ระบุชื่อ/บริษัท)")
+        with c8: 
+            bank_detail = st.text_input("โอนเข้าบัญชีธนาคาร (ระบุชื่อธนาคารและเลขที่)")
         with c9: 
             leader = st.text_input("ลงชื่อผู้เบิกเงิน")
             position = st.text_input("ตำแหน่ง")
@@ -353,16 +370,24 @@ if menu == "📝 บันทึกตั้งเบิก":
             st.error("กรุณากรอกข้อมูลสำคัญให้ครบถ้วน")
         else:
             new_data = {
-                "NO": "", "เลขที่ออก": next_doc, "วัน": now.day, "เดือน": now.month, "ปี": thai_year,
-                "ผู้ลงนาม": "ผู้อำนวยการ", "ถึง": to_who, "เรื่อง": subject, "คณะ": faculty, 
-                "หัวหน้าโครงการวิจัย": leader, "ผู้ประสาน": "", "เงินที่อนุมัติ": budget_total,
-                "จำนวนเงิน": amount, "ชื่อโครงการ": project, "รหัสหมวด": f"{budget_cat} {BUDGET_MASTER[budget_cat]}",
+                "NO": "", "เลขที่ออก": next_doc,
+                "วัน": now.day, "เดือน": now.month, "ปี": thai_year,
+                "ผู้ลงนาม": "ผู้อำนวยการ", "ถึง": to_who, "เรื่อง": subject,
+                "คณะ": faculty, "หัวหน้าโครงการวิจัย": leader,
+                "ผู้ประสาน": "", "เงินที่อนุมัติ": budget_total,
+                "จำนวนเงิน": amount, "ชื่อโครงการ": project,
+                "รหัสหมวด": f"{budget_cat} {BUDGET_MASTER[budget_cat]}",
                 "บันทึกเมื่อ": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "สิ่งที่ส่งมาด้วย": attachments, "จำนวนเงิน_ตัวอักษร": amount_text,
-                "สั่งจ่ายให้": pay_to, "ธนาคาร": bank_detail, "ตำแหน่ง": position
+                "สิ่งที่ส่งมาด้วย": attachments,
+                "จำนวนเงิน_ตัวอักษร": amount_text,
+                "สั่งจ่ายให้": pay_to,
+                "ธนาคาร": bank_detail,
+                "ตำแหน่ง": position
             }
-            try: df_curr = pd.read_csv(DB_FILE)
-            except: df_curr = pd.DataFrame()
+            try: 
+                df_curr = pd.read_csv(DB_FILE)
+            except: 
+                df_curr = pd.DataFrame()
             
             df_new = pd.DataFrame([new_data])
             df_out = pd.concat([df_curr, df_new], ignore_index=True)
@@ -372,17 +397,15 @@ if menu == "📝 บันทึกตั้งเบิก":
             
             pdf_data = new_data.copy()
             pdf_data['เดือน_ตัวอักษร'] = month_str
-            # ส่งค่า show_grid_mode ไปวาดตาราง
-            st.session_state['pdf_bytes'] = create_filled_pdf(pdf_data, show_grid_mode)
+            st.session_state['pdf_bytes'] = create_filled_pdf(pdf_data)
 
     if st.session_state['pdf_bytes']:
         st.markdown("---")
         st.subheader("🖨️ พิมพ์เอกสาร")
-        file_suffix = "_GRID" if show_grid_mode else ""
         st.download_button(
             label="📄 ดาวน์โหลดใบเบิก (PDF)", 
             data=st.session_state['pdf_bytes'], 
-            file_name=f"ใบเบิก_{next_doc.replace('/', '-')}{file_suffix}.pdf", 
+            file_name=f"ใบเบิก_{next_doc.replace('/', '-')}.pdf", 
             mime="application/pdf", 
             type="primary"
         )
@@ -390,8 +413,10 @@ if menu == "📝 บันทึกตั้งเบิก":
 # --- หน้าสรุป ---
 elif menu == "📊 สรุปและคุมงบประมาณ":
     st.title("📊 ศูนย์บัญชาการงบประมาณ")
-    try: raw_df = pd.read_csv(DB_FILE, encoding='utf-8-sig')
-    except: raw_df = pd.DataFrame()
+    try: 
+        raw_df = pd.read_csv(DB_FILE, encoding='utf-8-sig')
+    except: 
+        raw_df = pd.DataFrame()
         
     df = process_data(raw_df)
 
@@ -407,8 +432,10 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
             current_y = datetime.now().year + 543
             if not df.empty and df['ปี'].sum() > 0:
                 available_years = sorted(df[selected_col].unique(), reverse=True)
-                if current_y not in available_years: available_years.insert(0, current_y)
-            else: available_years = [current_y]
+                if current_y not in available_years: 
+                    available_years.insert(0, current_y)
+            else: 
+                available_years = [current_y]
             selected_year = st.selectbox("2. เลือกปี (พ.ศ.)", available_years)
 
     st.markdown("---")
@@ -416,15 +443,24 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
         col_set1, col_set2 = st.columns([3, 1])
         current_target = get_target_budget(selected_type_label, selected_year)
         with col_set1:
-            target_input = st.number_input(f"งบประมาณรวม ({selected_type_label} {selected_year})", min_value=0.0, value=current_target, format="%.2f")
+            target_input = st.number_input(
+                f"งบประมาณรวม ({selected_type_label} {selected_year})", 
+                min_value=0.0, 
+                value=current_target, 
+                format="%.2f"
+            )
         with col_set2:
-            st.write(""); st.write("")
+            st.write("")
+            st.write("")
             if st.button("💾 บันทึกยอด"):
                 save_target_budget(selected_type_label, selected_year, target_input)
-                st.success("บันทึกเรียบร้อย"); st.rerun()
+                st.success("บันทึกเรียบร้อย")
+                st.rerun()
 
-    if not df.empty: filtered_df = df[df[selected_col] == selected_year]
-    else: filtered_df = pd.DataFrame(columns=df.columns)
+    if not df.empty: 
+        filtered_df = df[df[selected_col] == selected_year]
+    else: 
+        filtered_df = pd.DataFrame(columns=df.columns)
 
     total_spent = filtered_df['จำนวนเงิน'].sum()
     remaining_budget = target_input - total_spent
@@ -444,16 +480,20 @@ elif menu == "📊 สรุปและคุมงบประมาณ":
         if not filtered_df.empty:
             cat_sum = filtered_df.groupby("รหัสหมวด")['จำนวนเงิน'].sum().reset_index()
             plot_donut_chart(cat_sum, "รหัสหมวด", "จำนวนเงิน")
-            with st.expander("ดูตารางข้อมูล"): st.dataframe(cat_sum.style.format({"จำนวนเงิน": "{:,.2f}"}), hide_index=True)
-        else: st.info("ไม่มีข้อมูล")
+            with st.expander("ดูตารางข้อมูล"): 
+                st.dataframe(cat_sum.style.format({"จำนวนเงิน": "{:,.2f}"}), hide_index=True)
+        else: 
+            st.info("ไม่มีข้อมูล")
             
     with col_chart2:
         st.subheader("🏢 สัดส่วนตามคณะ/หน่วยงาน")
         if not filtered_df.empty:
             fac_sum = filtered_df.groupby("คณะ")['จำนวนเงิน'].sum().reset_index()
             plot_donut_chart(fac_sum, "คณะ", "จำนวนเงิน")
-            with st.expander("ดูตารางข้อมูล"): st.dataframe(fac_sum.style.format({"จำนวนเงิน": "{:,.2f}"}), hide_index=True)
-        else: st.info("ไม่มีข้อมูล")
+            with st.expander("ดูตารางข้อมูล"): 
+                st.dataframe(fac_sum.style.format({"จำนวนเงิน": "{:,.2f}"}), hide_index=True)
+        else: 
+            st.info("ไม่มีข้อมูล")
 
     if not filtered_df.empty:
         st.markdown("---")
