@@ -20,32 +20,32 @@ st.set_page_config(page_title="ระบบบริหารจัดการ�
 DB_FILE = "database_claims.csv"
 TARGET_FILE = "budget_targets.csv"
 TEMPLATE_PDF = "ใบเบิก.pdf"         
-FONT_FILE = "THSarabunNew.ttf"       # ระบบจะอ่านจากไฟล์ที่นายหญิงอัปโหลดไว้เท่านั้น
+FONT_FILE = "THSarabunNew.ttf"       
 
-# --- 🎯 ฐานข้อมูลพิกัดข้อความ (PDF CONFIG) ลงเส้นประ 100% ---
+# --- 🎯 ฐานข้อมูลพิกัดข้อความ (ดึงมาจากเวอร์ชันสี่เหลี่ยมดำที่นายหญิงต้องการ) ---
 PDF_CONFIG = {
-    "faculty":        (140, 675), 
+    "faculty":        (110, 675), 
     "doc_no":         (100, 657), 
     "date_day":       (295, 657),  
-    "date_month":     (365, 657),  
-    "date_year":      (445, 657),  
-    "check_req":      (95,  645),  
-    "subject":        (270, 645),  
-    "attach_1":       (135, 612),  
-    "amount":         (155, 533),  
-    "amount_txt":     (335, 533),  
-    "pay_to":         (115, 513),  
-    "req_d":          (295, 513),  
-    "req_m":          (355, 513), 
-    "req_y":          (425, 513), 
-    "check_bank":     (75,  497),  
-    "bank_detail":    (215, 497),  
-    "project":        (195, 461),  
-    "faculty_budget": (215, 431),  
-    "check_budget":   (115, 415),  
-    "budget_cat":     (235, 415),  
+    "date_month":     (350, 657),  
+    "date_year":      (415, 657),  
+    "check_req":      (140, 640),  
+    "subject":        (170, 640),  
+    "attach_1":       (135, 613),  
+    "amount":         (155, 563),  
+    "amount_txt":     (330, 563),  
+    "pay_to":         (90,  547),  
+    "req_d":          (275, 547),  
+    "req_m":          (330, 547), 
+    "req_y":          (410, 547), 
+    "check_bank":     (90,  510),  
+    "bank_detail":    (250, 510),  
+    "project":        (210, 495),  
+    "faculty_budget": (215, 430),  
+    "check_budget":   (125, 430),  
+    "budget_cat":     (235, 430),  
     "leader":         (340, 303),  
-    "position":       (340, 276), 
+    "position":       (270, 350), 
 }
 
 # --- Master Data ---
@@ -169,9 +169,8 @@ def create_filled_pdf(data):
         st.error(f"❌ ไม่พบไฟล์ต้นฉบับ {TEMPLATE_PDF}")
         return None
     
-    font_name = "Helvetica" # สำรองกรณีฉุกเฉิน
+    font_name = "Helvetica" 
     
-    # อ่านฟอนต์จากระบบโดยตรง
     if os.path.exists(FONT_FILE):
         try:
             pdfmetrics.registerFont(TTFont('ThaiFont', FONT_FILE))
