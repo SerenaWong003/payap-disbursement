@@ -29,7 +29,7 @@ PDF_CONFIG = {
     "date_day":       (295, 657),  
     "date_month":     (350, 657),  
     "date_year":      (415, 657),  
-    "check_req":      (135, 640),  
+    "check_req":      (140, 642),  
      
     "attach_1":       (135, 613),  
     "amount":         (155, 563),  
