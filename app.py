@@ -24,52 +24,53 @@ TEMPLATE_PDF = "ใบเบิก.pdf"
 FONT_FILE = "THSarabunNew.ttf"       
 FONT_URL = "https://github.com/gungunss/ThaiFonts/raw/master/THSarabunNew.ttf"
 
-# --- 🎯 ฐานข้อมูลพิกัดข้อความ (PDF CONFIG) สอบเทียบแกน X ลงเส้นประ 100% ---
+# --- 🎯 ฐานข้อมูลพิกัดข้อความ (PDF CONFIG) ปรับปรุงล่าสุด ---
 PDF_CONFIG = {
-    # บรรทัด L1: หน่วยงาน (ตำแหน่งที่ถูกต้องแล้ว)
+    # บรรทัด L1: หน่วยงาน
     "faculty":        (110, 675), 
     
-    # บรรทัด L2: ที่ มพย. / วันที่ / เดือน / พ.ศ. (ขยับเข้าเส้นประ)
+    # บรรทัด L2: ที่ มพย. / วันที่ / เดือน / พ.ศ.
     "doc_no":         (100, 657), 
-    "date_day":       (295, 657),  # ตรงกับเส้นประ วันที่
-    "date_month":     (350, 657),  # ตรงกับเส้นประ เดือน
-    "date_year":      (415, 657),  # ตรงกับเส้นประ พ.ศ.
+    "date_day":       (295, 657),  
+    "date_month":     (350, 657),  
+    "date_year":      (415, 657),  
     
     # บรรทัด L3: เรื่อง (กากบาทขอเบิกเงิน และ เติมข้อความ)
-    "check_req":      (140,  640),  # ตรงช่องสี่เหลี่ยมเป๊ะ
-    
+    "check_req":      (140, 640),  
+    "subject":        (170, 640),  # ข้าน้อยเติมกลับมาให้แล้วครับ
     
     # บรรทัด L5: สิ่งที่ส่งมาด้วย 1.
-    "attach_1":       (135, 613),  # ตรงเส้นประ
+    "attach_1":       (135, 613),  
     
     # บรรทัด L8: ขอเบิกเงินจำนวน ... บาท ... สตางค์
     "amount":         (155, 563),  
-    "amount_txt":     (330, 563),  # ลงในวงเล็บพอดี
+    "amount_txt":     (330, 563),  
     
     # บรรทัด L9: สั่งจ่ายให้ / โดยขอรับเงินในวันที่
-    "pay_to":         (90, 547),  
+    "pay_to":         (90,  547),  
     "req_d":          (275, 547),  
     "req_m":          (330, 547), 
     "req_y":          (410, 547), 
     
     # บรรทัด L11: กากบาทเข้าบัญชีธนาคาร / เลขที่
-    "check_bank":     (90,  510),  # ตรงช่องสี่เหลี่ยม
-    "bank_detail":    (250, 510),  # ตรงเส้นประเลขบัญชี
+    "check_bank":     (90,  510),  
+    "bank_detail":    (250, 510),  
     
     # บรรทัด L12: เพื่อใช้ในกิจกรรมดังนี้
     "project":        (210, 495),  
     
     # บรรทัด L13: โดยใช้งบประมาณของหน่วยงาน
-    "faculty_budget": (430, 130),  
+    "faculty_budget": (215, 430),  # แก้ไขจาก 430, 130 ให้อยู่ระดับบรรทัด
     
     # บรรทัด L14: กากบาทในงบประมาณข้อ / ระบุหมวด
-    "check_budget":   (125, 430),  # ตรงช่องสี่เหลี่ยม
+    "check_budget":   (125, 430),  
     "budget_cat":     (235, 430),  
     
     # ส่วนลงชื่อ (ขวาล่าง)
-    "leader":         (340, 303),  # กึ่งกลางวงเล็บเซ็นชื่อ
+    "leader":         (340, 303),  
     "position":       (270, 350), 
 }
+
 # --- Master Data ---
 BUDGET_MASTER = {
     "541010001": "หมวดส่งเสริมการวิจัย", 
@@ -88,7 +89,7 @@ FACULTY_MASTER = [
 ]
 
 # ==========================================
-# 2. ฟังก์ชันระบบจัดการไฟล์
+# 2. ฟังก์ชันระบบจัดการไฟล์ (อัปเกรดเพื่อแก้บัค)
 # ==========================================
 def check_and_download_font():
     if not os.path.exists(FONT_FILE):
@@ -101,6 +102,7 @@ def check_and_download_font():
             pass
 
 def init_files():
+    # ใช้ Native Python Writer เพื่อหลีกเลี่ยงบัคของ Pandas (Empty DataFrame)
     if not os.path.exists(DB_FILE):
         cols = [
             "NO", "เลขที่ออก", "วัน", "เดือน", "ปี", "ผู้ลงนาม", "ถึง", "เรื่อง", 
@@ -108,11 +110,13 @@ def init_files():
             "จำนวนเงิน", "ชื่อโครงการ", "รหัสหมวด", "บันทึกเมื่อ", 
             "สิ่งที่ส่งมาด้วย", "จำนวนเงิน_ตัวอักษร", "สั่งจ่ายให้", "ธนาคาร", "ตำแหน่ง"
         ]
-        pd.DataFrame(columns=cols).to_csv(DB_FILE, index=False, encoding='utf-8-sig')
+        with open(DB_FILE, "w", encoding="utf-8-sig") as f:
+            f.write(",".join(cols) + "\n")
     
     if not os.path.exists(TARGET_FILE):
-        pd.DataFrame(columns=["year_type", "year", "amount"]).to.csv(TARGET_FILE, index=False, encoding='utf-8-sig')
-        
+        with open(TARGET_FILE, "w", encoding="utf-8-sig") as f:
+            f.write("year_type,year,amount\n")
+            
     check_and_download_font()
 
 def get_current_date():
