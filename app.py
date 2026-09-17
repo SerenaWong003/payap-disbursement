@@ -24,54 +24,51 @@ TEMPLATE_PDF = "ใบเบิก.pdf"
 FONT_FILE = "THSarabunNew.ttf"       
 FONT_URL = "https://github.com/gungunss/ThaiFonts/raw/master/THSarabunNew.ttf"
 
-# --- 🎯 ฐานข้อมูลพิกัดข้อความ (PDF CONFIG) จัดกลุ่มล็อกบรรทัด ---
-# แกน Y (ความสูง) ของข้อมูลบรรทัดเดียวกันจะเท่ากันเสมอ เพื่อไม่ให้ข้อความเด้ง
+# --- 🎯 ฐานข้อมูลพิกัดข้อความ (PDF CONFIG) สอบเทียบจากฟอร์มจริง ---
 PDF_CONFIG = {
-    # บรรทัดที่ 1 (หน่วยงาน)
-    "faculty":    (160, 765),
+    # บรรทัด L1: หน่วยงาน
+    "faculty":        (120, 767), 
     
-    # บรรทัดที่ 2 (ที่ มพย และ วันที่)
-    "doc_no":     (100, 740),
-    "date_day":   (360, 740),
-    "date_month": (410, 740),
-    "date_year":  (490, 740),
+    # บรรทัด L2: ที่ มพย. / วันที่ / เดือน / พ.ศ.
+    "doc_no":         (100, 746), 
+    "date_day":       (330, 746), 
+    "date_month":     (400, 746), 
+    "date_year":      (500, 746), 
     
-    # บรรทัดที่ 3 (เรื่อง)
-    "subject":    (100, 715),
+    # บรรทัด L3: เรื่อง (กากบาทขอเบิกเงิน และ เติมข้อความ)
+    "check_req":      (90, 725),  # ตำแหน่งกากบาท [X] ขอเบิกเงิน
+    "subject":        (170, 725), # ข้อความชื่อเรื่อง
     
-    # บรรทัดที่ 4 (สิ่งที่ส่งมาด้วย)
-    "attach_1":   (130, 665),
+    # บรรทัด L5: สิ่งที่ส่งมาด้วย 1.
+    "attach_1":       (130, 683), 
     
-    # บรรทัดที่ 5 (ขอเบิกเงิน และ จำนวนเงินตัวเลข)
-    "check_req":  (72, 625),   # กากบาท [X] หน้าขอเบิกเงิน
-    "amount":     (190, 625),  # ตัวเลขจำนวนเงิน
+    # บรรทัด L8: ขอเบิกเงินจำนวน ... บาท ... สตางค์ (ตัวอักษร)
+    "amount":         (180, 620), 
+    "amount_txt":     (420, 620), 
     
-    # บรรทัดที่ 6 (จำนวนเงินตัวอักษร - อยู่บรรทัดถัดลงมาตรงวงเล็บ)
-    "amount_txt": (150, 600),
+    # บรรทัด L9: สั่งจ่ายให้ / โดยขอรับเงินในวันที่
+    "pay_to":         (110, 599), 
+    "req_d":          (340, 599), 
+    "req_m":          (420, 599), 
+    "req_y":          (510, 599), 
     
-    # บรรทัดที่ 7 (สั่งจ่าย และ วันที่รับเงิน)
-    "pay_to":     (130, 575),
-    "req_d":      (340, 575),
-    "req_m":      (390, 575),
-    "req_y":      (470, 575),
+    # บรรทัด L11: กากบาทเข้าบัญชีธนาคาร / เลขที่
+    "check_bank":     (85, 556),  # ตำแหน่งกากบาท [X]
+    "bank_detail":    (260, 556), 
     
-    # บรรทัดที่ 8 (เข้าบัญชีธนาคาร)
-    "check_bank": (72, 500),   # กากบาท [X] หน้าเข้าบัญชีธนาคาร
-    "bank_detail":(230, 500),  # ชื่อธนาคารและเลขบัญชี
+    # บรรทัด L12: เพื่อใช้ในกิจกรรมดังนี้
+    "project":        (250, 535), 
     
-    # บรรทัดที่ 9 (เพื่อใช้ในกิจกรรม)
-    "project":    (210, 475),
+    # บรรทัด L14: โดยใช้งบประมาณของหน่วยงาน
+    "faculty_budget": (230, 480), 
     
-    # บรรทัดที่ 10 (งบประมาณของหน่วยงาน)
-    "faculty_budget": (240, 450),
+    # บรรทัด L15: กากบาทในงบประมาณข้อ / ระบุหมวด
+    "check_budget":   (130, 459), # ตำแหน่งกากบาท [X]
+    "budget_cat":     (250, 459), 
     
-    # บรรทัดที่ 11 (ในงบประมาณข้อ)
-    "check_budget": (72, 425), # กากบาท [X] หน้าในงบประมาณข้อ
-    "budget_cat": (180, 425),  # หมวดงบประมาณ
-    
-    # ส่วนลงชื่อผู้เบิก (ด้านล่างขวา)
-    "leader":     (360, 310),
-    "position":   (360, 285),
+    # ส่วนลงชื่อ (ขวาล่าง)
+    "leader":         (350, 375), 
+    "position":       (350, 354), 
 }
 
 # --- Master Data ---
@@ -94,7 +91,6 @@ FACULTY_MASTER = [
 # ==========================================
 # 2. ฟังก์ชันระบบจัดการไฟล์
 # ==========================================
-
 def check_and_download_font():
     if not os.path.exists(FONT_FILE):
         try:
@@ -213,7 +209,7 @@ def create_filled_pdf(data):
     
     packet = io.BytesIO()
     can = canvas.Canvas(packet, pagesize=A4)
-    can.setFont(font_name, 14)
+    can.setFont(font_name, 15) # ปรับขนาดฟอนต์ให้พอดีกับช่อง
 
     def draw(key, text):
         if key in PDF_CONFIG:
@@ -228,13 +224,11 @@ def create_filled_pdf(data):
     draw("date_year", data["ปี"])
     
     draw("subject", data.get("เรื่อง", ""))
-    # ไม่ดึง "ถึง" หรือ "เรียน" มาวาดใน PDF แล้ว
-    
     draw("attach_1", data.get("สิ่งที่ส่งมาด้วย", "-"))
     
-    can.setFont("Helvetica-Bold", 14)
+    can.setFont("Helvetica-Bold", 15)
     draw("check_req", "X")
-    can.setFont(font_name, 14)
+    can.setFont(font_name, 15)
     
     draw("amount", f"{data['จำนวนเงิน']:,.2f}")
     draw("amount_txt", f"({data.get('จำนวนเงิน_ตัวอักษร', '')})")
@@ -245,21 +239,20 @@ def create_filled_pdf(data):
     draw("req_y", data["ปี"])
     
     if data.get("ธนาคาร", "") != "":
-        can.setFont("Helvetica-Bold", 14)
+        can.setFont("Helvetica-Bold", 15)
         draw("check_bank", "X")
-        can.setFont(font_name, 12)
+        can.setFont(font_name, 15)
         draw("bank_detail", data.get("ธนาคาร", ""))
-        can.setFont(font_name, 14)
     
     draw("project", data.get("ชื่อโครงการ", ""))
     draw("faculty_budget", data.get("คณะ", ""))
     
-    can.setFont("Helvetica-Bold", 14)
+    can.setFont("Helvetica-Bold", 15)
     draw("check_budget", "X")
-    can.setFont(font_name, 14)
+    can.setFont(font_name, 15)
     draw("budget_cat", data.get("รหัสหมวด", ""))
     
-    draw("leader", f"({data.get('หัวหน้าโครงการวิจัย', '')})")
+    draw("leader", data.get("หัวหน้าโครงการวิจัย", ""))
     draw("position", data.get("ตำแหน่ง", ""))
 
     can.save()
@@ -332,7 +325,7 @@ if menu == "📝 บันทึกตั้งเบิก":
     with st.form("entry_form", clear_on_submit=False):
         c1, c2 = st.columns([2, 1])
         with c1: 
-            subject = st.text_input("เรื่อง")
+            subject = st.text_input("เรื่อง (ขยายความจากขอเบิกเงิน)")
         with c2: 
             to_who = st.text_input("เรียน", value="หัวหน้าแผนกการเงิน")
         
