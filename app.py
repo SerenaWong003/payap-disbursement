@@ -4,7 +4,6 @@ from datetime import datetime
 import os
 import io
 import altair as alt
-import requests
 
 # --- Library สำหรับ PDF ---
 from pypdf import PdfReader, PdfWriter
@@ -21,54 +20,32 @@ st.set_page_config(page_title="ระบบบริหารจัดการ�
 DB_FILE = "database_claims.csv"
 TARGET_FILE = "budget_targets.csv"
 TEMPLATE_PDF = "ใบเบิก.pdf"         
-FONT_FILE = "THSarabunNew.ttf"       
-FONT_URL = "https://github.com/gungunss/ThaiFonts/raw/master/THSarabunNew.ttf"
+FONT_FILE = "THSarabunNew.ttf"       # ระบบจะอ่านจากไฟล์ที่นายหญิงอัปโหลดไว้เท่านั้น
 
-# --- 🎯 ฐานข้อมูลพิกัดข้อความ (PDF CONFIG) ปรับปรุงล่าสุด ---
+# --- 🎯 ฐานข้อมูลพิกัดข้อความ (PDF CONFIG) ลงเส้นประ 100% ---
 PDF_CONFIG = {
-    # บรรทัด L1: หน่วยงาน
-    "faculty":        (110, 675), 
-    
-    # บรรทัด L2: ที่ มพย. / วันที่ / เดือน / พ.ศ.
+    "faculty":        (140, 675), 
     "doc_no":         (100, 657), 
     "date_day":       (295, 657),  
-    "date_month":     (350, 657),  
-    "date_year":      (415, 657),  
-    
-    # บรรทัด L3: เรื่อง (กากบาทขอเบิกเงิน และ เติมข้อความ)
-    "check_req":      (140, 640),  
-    "subject":        (170, 640),  # ข้าน้อยเติมกลับมาให้แล้วครับ
-    
-    # บรรทัด L5: สิ่งที่ส่งมาด้วย 1.
-    "attach_1":       (135, 613),  
-    
-    # บรรทัด L8: ขอเบิกเงินจำนวน ... บาท ... สตางค์
-    "amount":         (155, 563),  
-    "amount_txt":     (330, 563),  
-    
-    # บรรทัด L9: สั่งจ่ายให้ / โดยขอรับเงินในวันที่
-    "pay_to":         (90,  547),  
-    "req_d":          (275, 547),  
-    "req_m":          (330, 547), 
-    "req_y":          (410, 547), 
-    
-    # บรรทัด L11: กากบาทเข้าบัญชีธนาคาร / เลขที่
-    "check_bank":     (90,  510),  
-    "bank_detail":    (250, 510),  
-    
-    # บรรทัด L12: เพื่อใช้ในกิจกรรมดังนี้
-    "project":        (210, 495),  
-    
-    # บรรทัด L13: โดยใช้งบประมาณของหน่วยงาน
-    "faculty_budget": (215, 430),  # แก้ไขจาก 430, 130 ให้อยู่ระดับบรรทัด
-    
-    # บรรทัด L14: กากบาทในงบประมาณข้อ / ระบุหมวด
-    "check_budget":   (125, 430),  
-    "budget_cat":     (235, 430),  
-    
-    # ส่วนลงชื่อ (ขวาล่าง)
+    "date_month":     (365, 657),  
+    "date_year":      (445, 657),  
+    "check_req":      (95,  645),  
+    "subject":        (270, 645),  
+    "attach_1":       (135, 612),  
+    "amount":         (155, 533),  
+    "amount_txt":     (335, 533),  
+    "pay_to":         (115, 513),  
+    "req_d":          (295, 513),  
+    "req_m":          (355, 513), 
+    "req_y":          (425, 513), 
+    "check_bank":     (75,  497),  
+    "bank_detail":    (215, 497),  
+    "project":        (195, 461),  
+    "faculty_budget": (215, 431),  
+    "check_budget":   (115, 415),  
+    "budget_cat":     (235, 415),  
     "leader":         (340, 303),  
-    "position":       (270, 350), 
+    "position":       (340, 276), 
 }
 
 # --- Master Data ---
@@ -89,20 +66,9 @@ FACULTY_MASTER = [
 ]
 
 # ==========================================
-# 2. ฟังก์ชันระบบจัดการไฟล์ (อัปเกรดเพื่อแก้บัค)
+# 2. ฟังก์ชันระบบจัดการไฟล์ 
 # ==========================================
-def check_and_download_font():
-    if not os.path.exists(FONT_FILE):
-        try:
-            response = requests.get(FONT_URL)
-            if response.status_code == 200:
-                with open(FONT_FILE, "wb") as f: 
-                    f.write(response.content)
-        except: 
-            pass
-
 def init_files():
-    # ใช้ Native Python Writer เพื่อหลีกเลี่ยงบัคของ Pandas (Empty DataFrame)
     if not os.path.exists(DB_FILE):
         cols = [
             "NO", "เลขที่ออก", "วัน", "เดือน", "ปี", "ผู้ลงนาม", "ถึง", "เรื่อง", 
@@ -116,8 +82,6 @@ def init_files():
     if not os.path.exists(TARGET_FILE):
         with open(TARGET_FILE, "w", encoding="utf-8-sig") as f:
             f.write("year_type,year,amount\n")
-            
-    check_and_download_font()
 
 def get_current_date():
     now = datetime.now()
@@ -202,20 +166,27 @@ def save_target_budget(year_type, year, amount):
 
 def create_filled_pdf(data):
     if not os.path.exists(TEMPLATE_PDF):
-        st.error(f"❌ ไม่พบไฟล์ {TEMPLATE_PDF}")
+        st.error(f"❌ ไม่พบไฟล์ต้นฉบับ {TEMPLATE_PDF}")
         return None
     
-    font_name = "Helvetica"
+    font_name = "Helvetica" # สำรองกรณีฉุกเฉิน
+    
+    # อ่านฟอนต์จากระบบโดยตรง
     if os.path.exists(FONT_FILE):
-        pdfmetrics.registerFont(TTFont('ThaiFont', FONT_FILE))
-        font_name = 'ThaiFont'
+        try:
+            pdfmetrics.registerFont(TTFont('ThaiFont', FONT_FILE))
+            font_name = 'ThaiFont'
+        except Exception as e:
+            st.error(f"❌ โหลดฟอนต์ไทยไม่สำเร็จ: {e}")
+    else:
+        st.error("❌ ไม่พบไฟล์ THSarabunNew.ttf ในระบบ โปรดอัปโหลดไฟล์ฟอนต์")
     
     packet = io.BytesIO()
     can = canvas.Canvas(packet, pagesize=A4)
-    can.setFont(font_name, 15) 
+    can.setFont(font_name, 16) 
 
     def draw(key, text):
-        if key in PDF_CONFIG:
+        if key in PDF_CONFIG and text:
             base_x, base_y = PDF_CONFIG[key]
             can.drawString(base_x, base_y, str(text))
 
@@ -227,14 +198,16 @@ def create_filled_pdf(data):
     draw("date_year", data["ปี"])
     
     draw("subject", data.get("เรื่อง", ""))
-    draw("attach_1", data.get("สิ่งที่ส่งมาด้วย", "-"))
+    draw("attach_1", data.get("สิ่งที่ส่งมาด้วย", ""))
     
-    can.setFont("Helvetica-Bold", 15)
+    if font_name == 'Helvetica':
+        can.setFont("Helvetica-Bold", 16)
     draw("check_req", "X")
-    can.setFont(font_name, 15)
+    can.setFont(font_name, 16)
     
     draw("amount", f"{data['จำนวนเงิน']:,.2f}")
-    draw("amount_txt", f"({data.get('จำนวนเงิน_ตัวอักษร', '')})")
+    if data.get('จำนวนเงิน_ตัวอักษร', '') != "":
+        draw("amount_txt", f"({data.get('จำนวนเงิน_ตัวอักษร', '')})")
     
     draw("pay_to", data.get("สั่งจ่ายให้", ""))
     draw("req_d", data["วัน"])
@@ -242,17 +215,19 @@ def create_filled_pdf(data):
     draw("req_y", data["ปี"])
     
     if data.get("ธนาคาร", "") != "":
-        can.setFont("Helvetica-Bold", 15)
+        if font_name == 'Helvetica':
+            can.setFont("Helvetica-Bold", 16)
         draw("check_bank", "X")
-        can.setFont(font_name, 15)
+        can.setFont(font_name, 16)
         draw("bank_detail", data.get("ธนาคาร", ""))
     
     draw("project", data.get("ชื่อโครงการ", ""))
     draw("faculty_budget", data.get("คณะ", ""))
     
-    can.setFont("Helvetica-Bold", 15)
+    if font_name == 'Helvetica':
+        can.setFont("Helvetica-Bold", 16)
     draw("check_budget", "X")
-    can.setFont(font_name, 15)
+    can.setFont(font_name, 16)
     draw("budget_cat", data.get("รหัสหมวด", ""))
     
     draw("leader", data.get("หัวหน้าโครงการวิจัย", ""))
@@ -309,8 +284,6 @@ if st.sidebar.button("⚠️ ล้างฐานข้อมูลทั้ง
         os.remove(DB_FILE)
     if os.path.exists(TARGET_FILE): 
         os.remove(TARGET_FILE)
-    if os.path.exists(FONT_FILE): 
-        os.remove(FONT_FILE)
     init_files()
     st.sidebar.success("ล้างข้อมูลเรียบร้อย!")
     st.rerun()
