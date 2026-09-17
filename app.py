@@ -29,8 +29,8 @@ PDF_CONFIG = {
     "date_day":       (295, 657),  
     "date_month":     (350, 657),  
     "date_year":      (415, 657),  
-    "check_req":      (140, 640),  
-    "subject":        (170, 640),  
+    "check_req":      (135, 640),  
+     
     "attach_1":       (135, 613),  
     "amount":         (155, 563),  
     "amount_txt":     (330, 563),  
@@ -45,7 +45,7 @@ PDF_CONFIG = {
     "check_budget":   (125, 430),  
     "budget_cat":     (235, 430),  
     "leader":         (340, 303),  
-    "position":       (270, 350), 
+    "position":       (270, 360), 
 }
 
 # --- Master Data ---
