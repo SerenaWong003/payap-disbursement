@@ -41,7 +41,7 @@ PDF_CONFIG = {
     "check_bank":     (90,  510),  
     "bank_detail":    (250, 510),  
     "project":        (210, 495),  
-    "faculty_budget": (215, 430),  
+    "faculty_budget": (250, 450),  
     "check_budget":   (125, 430),  
     "budget_cat":     (235, 430),  
     "leader":         (340, 303),  
