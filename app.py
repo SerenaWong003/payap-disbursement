@@ -24,51 +24,51 @@ TEMPLATE_PDF = "ใบเบิก.pdf"
 FONT_FILE = "THSarabunNew.ttf"       
 FONT_URL = "https://github.com/gungunss/ThaiFonts/raw/master/THSarabunNew.ttf"
 
-# --- 🎯 ฐานข้อมูลพิกัดข้อความ (PDF CONFIG) สอบเทียบด้วยไม้บรรทัดดิจิทัล ---
+# --- 🎯 ฐานข้อมูลพิกัดข้อความ (PDF CONFIG) สอบเทียบใหม่ทั้งหมด ---
 PDF_CONFIG = {
-    # บรรทัด L1: หน่วยงาน
-    "faculty":        (120, 675), 
+    # บรรทัด L1: หน่วยงาน (คงพิกัดเดิมตามที่นายหญิงยืนยัน)
+    "faculty":        (140, 675), 
     
-    # บรรทัด L2: ที่ มพย. / วันที่ / เดือน / พ.ศ.
+    # บรรทัด L2: ที่ มพย. / วันที่ / เดือน / พ.ศ. (คงพิกัด Y เดิมตามที่นายหญิงยืนยัน)
     "doc_no":         (100, 657), 
-    "date_day":       (330, 657), 
+    "date_day":       (340, 657), 
     "date_month":     (400, 657), 
-    "date_year":      (500, 657), 
+    "date_year":      (490, 657), 
     
-    # บรรทัด L3: เรื่อง (กากบาทขอเบิกเงิน และ เติมข้อความ)
-    "check_req":      (94,  638),  # กากบาท [X] ขอเบิกเงิน
-    "subject":        (170, 638),  # ข้อความชื่อเรื่อง
+    # บรรทัด L3: เรื่อง (กากบาทขอเบิกเงิน และ เติมข้อความ) - แก้ไขใหม่
+    "check_req":      (94,  645),  
+    "subject":        (170, 645),  
     
-    # บรรทัด L5: สิ่งที่ส่งมาด้วย 1.
-    "attach_1":       (140, 599), 
+    # บรรทัด L5: สิ่งที่ส่งมาด้วย 1. - แก้ไขใหม่
+    "attach_1":       (140, 612), 
     
-    # บรรทัด L8: ขอเบิกเงินจำนวน ... บาท ... สตางค์ (ตัวอักษร)
-    "amount":         (180, 555), 
-    "amount_txt":     (420, 555), 
+    # บรรทัด L8: ขอเบิกเงินจำนวน ... บาท ... สตางค์ (ตัวอักษร) - แก้ไขใหม่
+    "amount":         (160, 533),  
+    "amount_txt":     (400, 533), 
     
-    # บรรทัด L9: สั่งจ่ายให้ / โดยขอรับเงินในวันที่
-    "pay_to":         (110, 536), 
-    "req_d":          (350, 536), 
-    "req_m":          (410, 536), 
-    "req_y":          (510, 536), 
+    # บรรทัด L9: สั่งจ่ายให้ / โดยขอรับเงินในวันที่ - แก้ไขใหม่
+    "pay_to":         (120, 513),  
+    "req_d":          (350, 513), 
+    "req_m":          (400, 513), 
+    "req_y":          (490, 513), 
     
-    # บรรทัด L11: กากบาทเข้าบัญชีธนาคาร / เลขที่
-    "check_bank":     (94,  513),  # กากบาท [X] เข้าบัญชี
-    "bank_detail":    (270, 513), 
+    # บรรทัด L11: กากบาทเข้าบัญชีธนาคาร / เลขที่ - แก้ไขใหม่
+    "check_bank":     (94,  497),  
+    "bank_detail":    (250, 497), 
     
-    # บรรทัด L12: เพื่อใช้ในกิจกรรมดังนี้
-    "project":        (250, 487), 
+    # บรรทัด L12: เพื่อใช้ในกิจกรรมดังนี้ - แก้ไขใหม่
+    "project":        (230, 461),  
     
-    # บรรทัด L13: โดยใช้งบประมาณของหน่วยงาน
-    "faculty_budget": (250, 448), 
+    # บรรทัด L13: โดยใช้งบประมาณของหน่วยงาน - แก้ไขใหม่
+    "faculty_budget": (250, 431),  
     
-    # บรรทัด L14: กากบาทในงบประมาณข้อ / ระบุหมวด
-    "check_budget":   (145, 431), # กากบาท [X]
-    "budget_cat":     (270, 428), 
+    # บรรทัด L14: กากบาทในงบประมาณข้อ / ระบุหมวด - แก้ไขใหม่
+    "check_budget":   (145, 415), 
+    "budget_cat":     (250, 415),  
     
-    # ส่วนลงชื่อ (ขวาล่าง) - พิมพ์ลงในช่องวงเล็บ
-    "leader":         (360, 370), 
-    "position":       (360, 350), 
+    # ส่วนลงชื่อ (ขวาล่าง) - แก้ไขใหม่
+    "leader":         (350, 303), 
+    "position":       (350, 276), 
 }
 
 # --- Master Data ---
@@ -112,7 +112,7 @@ def init_files():
         pd.DataFrame(columns=cols).to_csv(DB_FILE, index=False, encoding='utf-8-sig')
     
     if not os.path.exists(TARGET_FILE):
-        pd.DataFrame(columns=["year_type", "year", "amount"]).to_csv(TARGET_FILE, index=False, encoding='utf-8-sig')
+        pd.DataFrame(columns=["year_type", "year", "amount"]).to.csv(TARGET_FILE, index=False, encoding='utf-8-sig')
         
     check_and_download_font()
 
@@ -209,7 +209,7 @@ def create_filled_pdf(data):
     
     packet = io.BytesIO()
     can = canvas.Canvas(packet, pagesize=A4)
-    can.setFont(font_name, 15) # ขนาดฟอนต์ 15 พอดีกับช่อง
+    can.setFont(font_name, 15) 
 
     def draw(key, text):
         if key in PDF_CONFIG:
